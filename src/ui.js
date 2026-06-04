@@ -46,6 +46,7 @@ export class UI {
     this.screenBody.innerHTML =
       `Run from couch to <b>shredded</b>. Dodge the junk.<br>` +
       `<span class="keys"><kbd>↑</kbd> / <kbd>Space</kbd> jump &nbsp;·&nbsp; <kbd>↓</kbd> duck</span><br>` +
+      `<span class="keys">Mobile: swipe <kbd>↑</kbd> jump &nbsp;·&nbsp; swipe <kbd>↓</kbd> duck</span><br>` +
       `Grab <span class="acc-energy">⚡</span> for speed · <span class="acc-steroid">💉</span> for <b>HULK BEAR</b>`;
     this.screenBtn.textContent = "▶  PLAY";
     this.overlay.classList.add("show");

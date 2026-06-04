@@ -90,8 +90,31 @@ window.addEventListener("keyup", (e) => {
   if (e.code === "ArrowUp" || e.code === "Space" || e.code === "KeyW") keys.jump = false;
   if (e.code === "ArrowDown" || e.code === "KeyS") bear.setDuck(false);
 });
-// tap / click to jump (mobile + convenience)
-canvas.addEventListener("pointerdown", () => { if (g.state === STATE.PLAYING) bear.jump(); });
+// Desktop: mouse click to jump.
+canvas.addEventListener("pointerdown", (e) => {
+  if (e.pointerType === "mouse" && g.state === STATE.PLAYING) bear.jump();
+});
+
+// Mobile: swipe up = jump, swipe down = duck (held until lift), tap = jump.
+const SWIPE = 28; // px before a drag counts as a swipe
+let touchY0 = 0, swipeDir = null;
+canvas.addEventListener("touchstart", (e) => {
+  if (g.state !== STATE.PLAYING) return;
+  touchY0 = e.touches[0].clientY;
+  swipeDir = null;
+}, { passive: true });
+canvas.addEventListener("touchmove", (e) => {
+  if (g.state !== STATE.PLAYING) return;
+  const dy = e.touches[0].clientY - touchY0;
+  if (swipeDir !== "up" && dy < -SWIPE) { swipeDir = "up"; bear.jump(); }
+  else if (swipeDir !== "down" && dy > SWIPE) { swipeDir = "down"; bear.setDuck(true); }
+}, { passive: true });
+canvas.addEventListener("touchend", () => {
+  if (swipeDir === "down") bear.setDuck(false);
+  else if (swipeDir === null && g.state === STATE.PLAYING) bear.jump(); // tap = jump
+  swipeDir = null;
+}, { passive: true });
+canvas.addEventListener("touchcancel", () => { bear.setDuck(false); swipeDir = null; }, { passive: true });
 
 function completedLength() {
   let s = 0;
