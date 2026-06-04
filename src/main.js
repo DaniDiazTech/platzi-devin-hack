@@ -49,6 +49,8 @@ const g = {
   checkpointTimer: 0,
   hulkMax: 4,
   flash: 0,
+  flashColor: "255,40,40",
+  leveledUp: false,
   bear,
 };
 
@@ -106,6 +108,7 @@ function start() {
   g.stageProgress = 0;
   g.boostTimer = 0;
   g.flash = 0;
+  g.leveledUp = false;
   bear.reset();
   world.reset();
   obstacles.reset();
@@ -130,9 +133,13 @@ function enterCheckpointOrFinish() {
   }
   g.state = STATE.CHECKPOINT;
   g.checkpointTimer = CONFIG.checkpointPause;
+  g.leveledUp = false;
   obstacles.reset();
   items.reset();
-  ui.showBanner(`CHECKPOINT ${st.to}`, "Leaner. Stronger. Keep going →");
+  // Bear stops and works out, visibly leveling up to the next form.
+  bear.exercise = { t: 0 };
+  bear.fitnessTarget = CONFIG.checkpointFitness[g.stageIndex] ?? bear.fitnessTarget;
+  ui.showBanner(`CHECKPOINT ${st.to}`, "Training… getting stronger 💪");
 }
 
 function advanceStage() {
@@ -143,6 +150,7 @@ function advanceStage() {
   world.transitionTo(st.theme, CONFIG.skyTransition);
   items.beginStage(st);
   g.hulkMax = st.hulk.duration;
+  bear.exercise = null;
   ui.hideBanner();
   audio.play(st.theme);   // crossfade to the new stage's track
   g.state = STATE.PLAYING;
@@ -175,7 +183,7 @@ function handleCollisions() {
       o.dead = true;
       fx.burst(o.x + o.w / 2, o.y + o.h / 2, "#ff6b6b");
       fx.popup(bear.x, bh.y - 10, "OUCH", "#ff6b6b");
-      g.flash = 0.25;
+      g.flash = 0.25; g.flashColor = "255,60,60";
       if (g.lives <= 0) {
         g.state = STATE.GAMEOVER;
         ui.showGameOver(Math.floor(g.score));
@@ -216,7 +224,6 @@ function update(dt) {
     fx.update(dt);
 
     if (g.boostTimer > 0) g.boostTimer -= dt;
-    if (g.flash > 0) g.flash -= dt;
 
     g.score += dt * CONFIG.distanceScorePerSec * (bear.hulk ? 2 : 1);
     g.stageElapsed += dt;
@@ -228,12 +235,22 @@ function update(dt) {
       enterCheckpointOrFinish();
     }
   } else if (g.state === STATE.CHECKPOINT) {
-    // gentle coast: keep the world moving, bear keeps running, no hazards
-    const speed = CONFIG.baseSpeed * 0.6;
+    // bear stops and works out; the world nearly halts (training pause)
+    const speed = CONFIG.baseSpeed * 0.12;
     world.update(dt, speed, width, height);
-    bear.update(dt, speed, (completedLength() + g.stageElapsed) / TOTAL_LEN);
+    bear.update(dt, speed, bear.fitnessTarget);
     fx.update(dt);
     g.checkpointTimer -= dt;
+    // mid-way through the reps: the level-up payoff
+    if (!g.leveledUp && g.checkpointTimer <= CONFIG.checkpointPause * 0.42) {
+      g.leveledUp = true;
+      const name = ["NORMAL", "MUSCULAR"][g.stageIndex] || "STRONGER";
+      ui.showBanner("LEVEL UP!", `${name} BEAR 💪`);
+      g.flash = 0.5; g.flashColor = "212,184,74";
+      const hb = bear.hitbox();
+      fx.burst(bear.x, hb.y + hb.h * 0.4, "#ffe06a");
+      fx.popup(bear.x, hb.y - 14, name, "#ffe06a");
+    }
     if (g.checkpointTimer <= 0) advanceStage();
   } else {
     // START / GAMEOVER / VICTORY: idle world animation behind the overlay
@@ -242,6 +259,7 @@ function update(dt) {
     fx.update(dt);
   }
 
+  if (g.flash > 0) g.flash -= dt;
   if (g.state === STATE.PLAYING || g.state === STATE.CHECKPOINT) ui.updateHUD(g);
 }
 
@@ -260,9 +278,9 @@ function render(time) {
     ctx.fillStyle = `rgba(63,208,106,${0.06 + Math.sin(time * 20) * 0.04})`;
     ctx.fillRect(0, 0, width, height);
   }
-  // hit flash
+  // screen flash (red on hit, gold on level-up)
   if (g.flash > 0) {
-    ctx.fillStyle = `rgba(255,40,40,${g.flash})`;
+    ctx.fillStyle = `rgba(${g.flashColor || "255,40,40"},${g.flash})`;
     ctx.fillRect(0, 0, width, height);
   }
 }
