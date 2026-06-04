@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/brand/ironbear_logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>IronBear — Bear Run</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game"></canvas>
+
+      <header class="hud">
+        <img class="logo" src="/brand/ironbear_logo.png" alt="IronBear" />
+        <span class="wordmark"><b>Iron</b><i>Bear</i></span>
+      </header>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-label">DISTANCE</span>
+          <span class="stat-value" id="distance">0 m</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">PACE</span>
+          <span class="stat-value" id="pace">8.0 km/h</span>
+        </div>
+      </div>
+
+      <footer class="hint">Bear Run — fitness demo · brand: IronBear</footer>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
